@@ -14,6 +14,6 @@ final class NonceGeneratorTest extends TestCase
 
     public function testLength()
     {
-        $this->assertEquals( 14, strlen(NonceGenerator::generate()));
+        $this->assertEquals( 16, strlen(NonceGenerator::generate()));
     }
 }

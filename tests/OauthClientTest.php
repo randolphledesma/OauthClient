@@ -15,5 +15,6 @@ final class OauthClientTest extends TestCase
     public function testConnect()
     {
         $oauth = new OauthClient();
+        $this->assertEquals( 16, 12);
     }
 }

@@ -1,7 +1,4 @@
 <?php
-
-namespace MDG\OauthClient;
-
 /**
  * The InMemoryPrivateKey is a simple wrapper around
  * a plaintext private key.

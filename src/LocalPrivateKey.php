@@ -1,7 +1,4 @@
 <?php
-
-namespace MDG\OauthClient;
-
 /**
  * The LocalPrivateKey represents a private key stored
  * in the PKCS#12 format in a file of the local filesystem.

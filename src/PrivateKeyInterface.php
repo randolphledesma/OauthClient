@@ -1,7 +1,4 @@
 <?php
-
-namespace MDG\OauthClient;
-
 /**
  * The PrivateKeyInterface abstraction allows the implementation
  * of different strategies for storing and retrieving RSA private

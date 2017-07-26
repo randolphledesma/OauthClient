@@ -1,7 +1,4 @@
 <?php
-
-namespace MDG\OauthClient;
-
 /**
  * The EncryptedPrivateKey holds an in-memory PKCS#12 string
  * and the passphrase needed to decrypt it.

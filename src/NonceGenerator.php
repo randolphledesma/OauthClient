@@ -1,7 +1,4 @@
 <?php
-
-namespace MDG\OauthClient;
-
 class NonceGenerator
 {
     /**

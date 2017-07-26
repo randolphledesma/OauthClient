@@ -5,19 +5,36 @@
  */
 class OauthClient
 {
-    protected $urlService;
+    const OAUTH_START_STRING = 'OAuth ';
+
+    const POST = 'POST';
+    const PUT = 'PUT';
+    const GET = 'GET';
+
+    const SSL_ERROR_MESSAGE = 'SSL Error Code: %s %sSSL Error Message: %s';
+
+    protected $endpoints;
+
     public $signatureBaseString;
     public $authHeader;
     protected $consumerKey;
     private $privateKey;
     private $version = '1.0';
-    private $signatureMethod = 'RSA-SHA1';
-    public $realm = 'MDG';
+    private $signatureMethod;
+    public $realm;
     public $errorMessage = null;
 
-    public function __construct()
+    public function __construct($configuration)
     {
+        $this->endpoints = array(
+            'base_uri'=>isset($configuration['base_uri']) ? $configuration['base_uri'] : '',
+            'request_token_url'=>isset($configuration['request_token_url']) ? $configuration['request_token_url'] : '',
+            'access_token_url'=>isset($configuration['access_token_url']) ? $configuration['access_token_url'] : '',
+            'callback_url'=>isset($configuration['callback_url']) ? $configuration['callback_url'] : ''
+        );
 
+        $this->signatureMethod = isset($configuration['signature_method']) ? $configuration['signature_method'] : 'RSA-SHA1';
+        $this->realm = isset($configuration['realm']) ? $configuration['realm'] : 'Realm';
     }
 
     /**
@@ -46,6 +63,28 @@ class OauthClient
     }
 
     /**
+     * This method allows the class client to override the
+     * signature method passed in the constructor.
+     *
+     * @param string $method
+     */
+    public function setSignatureMethod($method)
+    {
+        $this->signatureMethod = $method;
+    }
+
+    /**
+     * @param array       $params
+     * @param string|null $body
+     *
+     * @return string
+     */
+    public function doRequestToken($params, $body)
+    {
+        return $this->doRequest($params, $this->urlService->getRequestUrl(), self::POST, $body);
+    }
+
+    /**
      *  Method used for all Http connections.
      *
      * @param array       $params
@@ -71,6 +110,20 @@ class OauthClient
     }
 
     /**
+     * Method to generate the body hash.
+     *
+     * @param string $body
+     *
+     * @return string
+     */
+    public function generateBodyHash($body)
+    {
+        $sha1Hash = sha1($body, true);
+
+        return base64_encode($sha1Hash);
+    }
+
+    /**
      * General method to handle all HTTP connections.
      *
      * @param array       $params
@@ -92,13 +145,16 @@ class OauthClient
 
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 2);
-        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false); // This should always be TRUE to secure SSL connections
+        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
 
         curl_setopt($curl, CURLOPT_HTTPHEADER, array(
-            self::ACCEPT.self::COLON.self::SPACE.self::APPLICATION_XML,
-            self::CONTENT_TYPE.self::COLON.self::SPACE.self::APPLICATION_XML,
-            self::AUTHORIZATION.self::COLON.self::SPACE.$this->buildAuthHeaderString($params, $realm, $url, $requestMethod),
+            'Accept: application/xml; charset=utf-8;',
+            'Content-Type: application/xml; charset=utf-8;',
+            'Authorization: '
+            //self::AUTHORIZATION.self::COLON.self::SPACE.$this->buildAuthHeaderString($params, $realm, $url, $requestMethod),
         ));
+
+        //self::AUTHORIZATION.self::COLON.self::SPACE.$this->buildAuthHeaderString($params, $realm, $url, $requestMethod),
 
         if ($requestMethod == self::GET) {
             curl_setopt($curl, CURLOPT_HTTPGET, true);
@@ -109,6 +165,8 @@ class OauthClient
 
         $result = curl_exec($curl);
 
+        throw new Exception('throw');
+
         // Check if any error occurred
         if (curl_errno($curl)) {
             throw new \Exception(sprintf(self::SSL_ERROR_MESSAGE, curl_errno($curl), PHP_EOL, curl_error($curl)), curl_errno($curl));
@@ -116,8 +174,10 @@ class OauthClient
 
         // Check for errors and throw an exception
         if (($errorCode = curl_getinfo($curl, CURLINFO_HTTP_CODE)) > 300) {
-            throw new \Exception($result, $errorCode);
+            throw new \Exception($result);
         }
+
+        curl_close($curl);
 
         return $result;
     }
